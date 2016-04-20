@@ -64,10 +64,20 @@ project(":android") {
     }
 }
 
+project(":server") {
+    apply plugin: "scala"
+
+    dependencies {
+        compile project(":kryonet")
+        compile project(":core")
+    }
+}
+
 project(":core") {
     apply plugin: "scala"
 
     dependencies {
+        compile project(":kryonet")
         compile "com.badlogicgames.gdx:gdx:$gdxVersion"
         compile "com.badlogicgames.ashley:ashley:$ashleyVersion"
         compile "com.badlogicgames.gdx:gdx-freetype:$gdxVersion"
@@ -76,6 +86,16 @@ project(":core") {
         compile "com.kotcrab.vis:vis-ui:0.9.5"
         compile 'com.beachape:enumeratum_2.11:1.4.1'
         compile 'org.scala-lang:scala-library:2.11.1'
+    }
+}
+
+project(":kryonet") {
+    apply plugin: "java"
+
+    dependencies {
+        compile "com.esotericsoftware.kryo:kryo:2.24.0"
+        compile "com.esotericsoftware.minlog:minlog:1.2"
+        compile "com.esotericsoftware:jsonbeans:0.7"
     }
 }
 
