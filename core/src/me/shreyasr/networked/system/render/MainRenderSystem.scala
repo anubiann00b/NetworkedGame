@@ -17,7 +17,7 @@ class MainRenderSystem(priority: Int, res: NetworkedGame.Res)
         ttc.pos.x - ttc.originX, ttc.pos.y - ttc.originY,
         ttc.originX, ttc.originY,
         ttc.screenWidth, ttc.screenHeight,
-        1, 1, ttc.rotation,
+        1, 1, ttc.rotation.toDegrees,
         ttc.srcX, ttc.srcY, ttc.srcWidth, ttc.srcHeight,
         ttc.flipX, ttc.flipY)
     }
