@@ -19,10 +19,10 @@
 
 package com.esotericsoftware.kryonet;
 
-import java.net.DatagramPacket;
-
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
+
+import java.net.DatagramPacket;
 
 public interface ClientDiscoveryHandler {
 

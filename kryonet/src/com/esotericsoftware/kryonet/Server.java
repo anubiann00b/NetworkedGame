@@ -19,9 +19,14 @@
 
 package com.esotericsoftware.kryonet;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.util.IntMap;
+import com.esotericsoftware.kryonet.FrameworkMessage.DiscoverHost;
+import com.esotericsoftware.kryonet.FrameworkMessage.RegisterTCP;
+import com.esotericsoftware.kryonet.FrameworkMessage.RegisterUDP;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
 import java.nio.channels.CancelledKeyException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
@@ -32,13 +37,16 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Set;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.util.IntMap;
-import com.esotericsoftware.kryonet.FrameworkMessage.DiscoverHost;
-import com.esotericsoftware.kryonet.FrameworkMessage.RegisterTCP;
-import com.esotericsoftware.kryonet.FrameworkMessage.RegisterUDP;
-
-import static com.esotericsoftware.minlog.Log.*;
+import static com.esotericsoftware.minlog.Log.DEBUG;
+import static com.esotericsoftware.minlog.Log.ERROR;
+import static com.esotericsoftware.minlog.Log.INFO;
+import static com.esotericsoftware.minlog.Log.TRACE;
+import static com.esotericsoftware.minlog.Log.WARN;
+import static com.esotericsoftware.minlog.Log.debug;
+import static com.esotericsoftware.minlog.Log.error;
+import static com.esotericsoftware.minlog.Log.info;
+import static com.esotericsoftware.minlog.Log.trace;
+import static com.esotericsoftware.minlog.Log.warn;
 
 /** Manages TCP and optionally UDP connections from many {@link Client Clients}.
  * @author Nathan Sweet <misc@n4te.com> */

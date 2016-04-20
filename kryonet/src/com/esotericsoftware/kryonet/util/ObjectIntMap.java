@@ -19,9 +19,9 @@
 
 package com.esotericsoftware.kryonet.util;
 
-import java.util.Random;
-
 import com.esotericsoftware.kryo.util.ObjectMap;
+
+import java.util.Random;
 
 /** An unordered map where the values are ints. This implementation is a cuckoo hash map using 3 hashes, random walking, and a
  * small stash for problematic keys. Null keys are not allowed. No allocation is done except when growing the table size. <br>

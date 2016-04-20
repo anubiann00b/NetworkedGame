@@ -19,12 +19,12 @@
 
 package com.esotericsoftware.kryonet;
 
+import com.esotericsoftware.kryonet.FrameworkMessage.DiscoverHost;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
-
-import com.esotericsoftware.kryonet.FrameworkMessage.DiscoverHost;
 
 public interface ServerDiscoveryHandler {
 	/** This implementation of {@link ServerDiscoveryHandler} is responsible for providing the {@link Server} with it's default

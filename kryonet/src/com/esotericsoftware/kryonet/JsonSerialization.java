@@ -19,9 +19,6 @@
 
 package com.esotericsoftware.kryonet;
 
-import java.io.OutputStreamWriter;
-import java.nio.ByteBuffer;
-
 import com.esotericsoftware.jsonbeans.Json;
 import com.esotericsoftware.jsonbeans.JsonException;
 import com.esotericsoftware.kryo.io.ByteBufferInputStream;
@@ -32,7 +29,11 @@ import com.esotericsoftware.kryonet.FrameworkMessage.Ping;
 import com.esotericsoftware.kryonet.FrameworkMessage.RegisterTCP;
 import com.esotericsoftware.kryonet.FrameworkMessage.RegisterUDP;
 
-import static com.esotericsoftware.minlog.Log.*;
+import java.io.OutputStreamWriter;
+import java.nio.ByteBuffer;
+
+import static com.esotericsoftware.minlog.Log.INFO;
+import static com.esotericsoftware.minlog.Log.info;
 
 public class JsonSerialization implements Serialization {
 	private final Json json = new Json();
