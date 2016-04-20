@@ -6,7 +6,7 @@ import me.shreyasr.networked.NetworkedGame
 import me.shreyasr.networked.component.{InputDataComponent, StateDataComponent}
 import me.shreyasr.networked._
 
-class UpdateSystem(priority: Int, res: NetworkedGame.Res)
+class UpdateSystem(priority: Int, res: NetworkedGame.BaseRes)
   extends IteratingSystem(Family.all(classOf[InputDataComponent], classOf[StateDataComponent]).get(), priority) {
 
   override def processEntity(entity: Entity, deltaTime: Float) = {

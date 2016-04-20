@@ -49,5 +49,6 @@ public interface FrameworkMessage {
 	static public class Ping implements FrameworkMessage {
 		public int id;
 		public boolean isReply;
+		public long recvTime;
 	}
 }

@@ -41,6 +41,7 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryonet.FrameworkMessage.DiscoverHost;
 import com.esotericsoftware.kryonet.FrameworkMessage.RegisterTCP;
 import com.esotericsoftware.kryonet.FrameworkMessage.RegisterUDP;
+import com.esotericsoftware.minlog.Log;
 
 import static com.esotericsoftware.minlog.Log.*;
 
@@ -270,7 +271,12 @@ public class Client extends Connection implements EndPoint {
 						if ((ops & SelectionKey.OP_READ) == SelectionKey.OP_READ) {
 							if (selectionKey.attachment() == tcp) {
 								while (true) {
-									Object object = tcp.readObject(this);
+									Object object = null;
+									try {
+										object = tcp.readObject(this);
+									} catch(KryoNetException e) {
+										Log.error("kryonet", "Failed to serialize TCP", e);
+									}
 									if (object == null) break;
 									if (!tcpRegistered) {
 										if (object instanceof RegisterTCP) {
@@ -314,7 +320,12 @@ public class Client extends Connection implements EndPoint {
 								}
 							} else {
 								if (udp.readFromAddress() == null) continue;
-								Object object = udp.readObject(this);
+								Object object = null;
+								try {
+									object = udp.readObject(this);
+								} catch(KryoNetException e) {
+									Log.error("kryonet", "Failed to serialize TCP", e);
+								}
 								if (object == null) continue;
 								if (DEBUG) {
 									String objectString = object == null ? "null" : object.getClass().getSimpleName();

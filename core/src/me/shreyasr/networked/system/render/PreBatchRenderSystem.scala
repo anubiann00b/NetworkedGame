@@ -4,7 +4,7 @@ import com.badlogic.gdx.graphics.Color
 import me.shreyasr.networked.NetworkedGame
 import me.shreyasr.networked.system.render.util.BasicRenderSystem
 
-class PreBatchRenderSystem(priority: Int, res: NetworkedGame.Res) extends BasicRenderSystem(priority) {
+class PreBatchRenderSystem(priority: Int, res: NetworkedGame.RenderingRes) extends BasicRenderSystem(priority) {
 
   override def update(deltaTime: Float) {
     if (res.shape.isDrawing) res.shape.end()

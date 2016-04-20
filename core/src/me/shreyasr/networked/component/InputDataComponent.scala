@@ -9,8 +9,10 @@ class InputDataComponent(var w: Boolean = false,
                          var d: Boolean = false)
   extends Component {
 
-  override def toString: String =
-    (if (w) "w" else "") + (if (a) "a" else "") + (if (s) "s" else "") + (if (d) "d" else "")
+  def this() = this(false)
+
+  override def toString: String = "Input[" +
+    (if (w) "w" else "") + (if (a) "a" else "") + (if (s) "s" else "") + (if (d) "d" else "") + "]"
 }
 
 object InputDataComponent {

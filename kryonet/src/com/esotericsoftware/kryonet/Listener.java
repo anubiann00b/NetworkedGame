@@ -92,10 +92,13 @@ public class Listener {
 	/** Wraps a listener and queues notifications as {@link Runnable runnables}. This allows the runnables to be processed on a
 	 * different thread, preventing the connection's update thread from being blocked. */
 	static public abstract class QueuedListener extends Listener {
-		final Listener listener;
+		Listener listener;
 
 		public QueuedListener (Listener listener) {
-			if (listener == null) throw new IllegalArgumentException("listener cannot be null.");
+			setListener(listener);
+		}
+
+		public void setListener(Listener listener) {
 			this.listener = listener;
 		}
 

@@ -6,7 +6,7 @@ import me.shreyasr.networked.NetworkedGame
 import me.shreyasr.networked.component.RenderDataComponent
 import me.shreyasr.networked.system.render.util.IteratingRenderSystem
 
-class MainRenderSystem(priority: Int, res: NetworkedGame.Res)
+class MainRenderSystem(priority: Int, res: NetworkedGame.RenderingRes)
   extends IteratingRenderSystem(Family.all(classOf[RenderDataComponent]).get(), priority) {
 
   override def processEntity(entity: Entity, deltaTime: Float) {
