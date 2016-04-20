@@ -4,7 +4,7 @@ import java.nio.ByteBuffer
 
 import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.io.{ByteBufferInput, ByteBufferOutput}
-import me.shreyasr.networked.component.StateDataComponent
+import me.shreyasr.networked.component.{InputDataComponent, StateDataComponent}
 import me.shreyasr.networked.util.KryoRegistrar
 import me.shreyasr.networked.util.network.PacketToClient
 
@@ -20,7 +20,7 @@ object KryoTests {
     state.pos.y = 17
     state.dir = 2
     state.vel = 1
-    kryo.writeClassAndObject(output, new PacketToClient(5, state))
+    kryo.writeClassAndObject(output, new PacketToClient(5, state, Some(new InputDataComponent(true))))
     output.flush()
     println(buffer.position())
     buffer.rewind()

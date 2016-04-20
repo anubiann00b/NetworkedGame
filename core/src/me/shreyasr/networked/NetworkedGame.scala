@@ -1,11 +1,14 @@
 package me.shreyasr.networked
 
+import java.io.IOException
+
 import com.badlogic.ashley.core.Engine
 import com.badlogic.gdx.assets.AssetManager
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer
 import com.badlogic.gdx.{ApplicationAdapter, Gdx}
-import com.esotericsoftware.kryonet.{Client, Connection, Listener}
+import com.esotericsoftware.kryonet.{Client, Connection, KryoSerialization, Listener}
+import com.twitter.chill.ScalaKryoInstantiator
 import me.shreyasr.networked.NetworkedGame.RenderingRes
 import me.shreyasr.networked.system.render.util.RenderSystem
 import me.shreyasr.networked.system.render.{MainRenderSystem, PostRenderSystem, PreBatchRenderSystem, PreRenderSystem}
@@ -26,7 +29,7 @@ object NetworkedGame {
     var game: NetworkedGame = null
     val player = EntityFactory.createRenderablePlayer()
     val inputQueue = new InputDataQueue
-    val client = new Client
+    val client = new Client(8192, 2048, new KryoSerialization(new ScalaKryoInstantiator().newKryo()))
     val listener = new ListQueuedListener()
   }
 
@@ -59,7 +62,13 @@ class NetworkedGame extends ApplicationAdapter {
     listener.setListener(ClientListener)
     client.addListener(listener)
     client.start()
-    client.connect(5000, "127.0.0.1", 54555, 54777)
+    try {
+      client.connect(5000, "127.0.0.1", 54555, 54777)
+    } catch {
+      case ioe: IOException => println(ioe)
+      case e: Exception => println(e)
+    }
+    println(client.getUdpPort)
 	}
 
 	override def render() {
@@ -74,11 +83,13 @@ class NetworkedGame extends ApplicationAdapter {
     override def received(conn: Connection, obj: scala.Any): Unit = {
       obj match {
         case packet: PacketToClient =>
-          val entityOpt = engine.getById(packet.entityId)
-          if (entityOpt.isDefined) {
-            entityOpt.get.add(packet.stateDataComponent)
-          } else {
-            engine.addEntity(EntityFactory.createRenderablePlayer(packet.entityId, packet.stateDataComponent))
+          if (engine.getById(packet.entityId).isEmpty) {
+            engine.addEntity(EntityFactory.createRenderablePlayer(packet.entityId))
+          }
+          val entity = engine.getById(packet.entityId).get
+          entity.add(packet.stateDataComponent)
+          if (packet.inputDataComponentOpt.isDefined) {
+            entity.add(packet.inputDataComponentOpt.get)
           }
         case _ =>
       }

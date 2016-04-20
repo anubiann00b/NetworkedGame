@@ -5,12 +5,11 @@ import me.shreyasr.networked.component.{IdComponent, RenderDataComponent, StateD
 
 object EntityFactory {
 
-  def createRenderablePlayer(id: Int = IdComponent.randomId(),
-                             stateDataComponent: StateDataComponent = new StateDataComponent) =
-    createPlayer(id, stateDataComponent)
+  def createRenderablePlayer(id: Int = IdComponent.randomId()) =
+    createPlayer(id)
       .add(new RenderDataComponent(Asset.FIGHTER, 141, 95, 0.75f))
 
-  def createPlayer(id: Int, stateDataComponent: StateDataComponent = new StateDataComponent) = new Entity()
+  def createPlayer(id: Int) = new Entity()
     .add(new IdComponent(id))
-    .add(stateDataComponent)
+    .add(new StateDataComponent)
 }

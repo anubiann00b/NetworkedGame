@@ -1,7 +1,8 @@
 package me.shreyasr.networked
 
-import com.esotericsoftware.kryonet.{Connection, Listener, Server}
-import me.shreyasr.networked.component.StateDataComponent
+import com.esotericsoftware.kryonet.{Connection, KryoSerialization, Listener, Server}
+import com.twitter.chill.ScalaKryoInstantiator
+import me.shreyasr.networked.component.{InputDataComponent, StateDataComponent}
 import me.shreyasr.networked.system.UpdateSystem
 import me.shreyasr.networked.util.network.{ListQueuedListener, PacketToClient, PacketToServer}
 import me.shreyasr.networked.util.{EntityFactory, KryoRegistrar}
@@ -16,7 +17,7 @@ object ServerMain extends Listener {
   }
 
   class ServerRes extends NetworkedGame.BaseRes {
-    val server = new Server
+    val server = new Server(8192, 2048, new KryoSerialization(new ScalaKryoInstantiator().newKryo()))
     val listener = new ListQueuedListener(ServerMain)
     val idMap = new mutable.HashMap[Int, Int]
   }
@@ -40,7 +41,8 @@ object ServerMain extends Listener {
 
       engine.getEntities.asScala
         .filter(_.has[StateDataComponent])
-        .foreach(e => server.sendToAllUDP(new PacketToClient(e.id, e.get[StateDataComponent])))
+        .foreach(e => server.sendToAllUDP(
+          new PacketToClient(e.id, e.get[StateDataComponent], e.getOpt[InputDataComponent])))
 
       Thread.sleep(16)
     }

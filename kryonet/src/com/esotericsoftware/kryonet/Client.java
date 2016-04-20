@@ -239,6 +239,11 @@ public class Client extends Connection implements EndPoint {
 		connect(timeout, connectHost, connectTcpPort, connectUdpPort);
 	}
 
+	private int udpPort = -1;
+	public int getUdpPort() {
+		return udpPort;
+	}
+
 	/** Reads or writes any pending data for this client. Multiple threads should not call this method at the same time.
 	 * @param timeout Wait for up to the specified milliseconds for data to be ready to process. May be zero to return immediately
 	 *           if there is no data to process. */
@@ -301,6 +306,7 @@ public class Client extends Connection implements EndPoint {
 									if (udp != null && !udpRegistered) {
 										if (object instanceof RegisterUDP) {
 											synchronized (udpRegistrationLock) {
+												udpPort = udp.datagramChannel.socket().getLocalPort();
 												udpRegistered = true;
 												udpRegistrationLock.notifyAll();
 												if (TRACE) trace("kryonet", this + " received UDP: RegisterUDP");

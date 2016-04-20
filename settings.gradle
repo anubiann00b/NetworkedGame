@@ -1,1 +1,1 @@
-include 'desktop', 'android', 'server', 'core', 'kryonet'
+include 'desktop', 'server', 'core', 'kryonet'
