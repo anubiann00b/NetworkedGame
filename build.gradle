@@ -74,6 +74,7 @@ project(":core") {
         compile "com.badlogicgames.gdx:gdx-ai:$aiVersion"
         compile "com.github.czyzby:gdx-lml:1.5.1.8.0"
         compile "com.kotcrab.vis:vis-ui:0.9.5"
+        compile 'com.beachape:enumeratum_2.11:1.4.1'
         compile 'org.scala-lang:scala-library:2.11.1'
     }
 }
