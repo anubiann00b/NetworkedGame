@@ -2,13 +2,12 @@ package me.shreyasr.networked
 
 import com.esotericsoftware.kryonet.{Connection, KryoSerialization, Listener, Server}
 import com.twitter.chill.ScalaKryoInstantiator
-import me.shreyasr.networked.component.{InputDataComponent, StateDataComponent}
+import me.shreyasr.networked.component.InputDataComponent
 import me.shreyasr.networked.system.UpdateSystem
 import me.shreyasr.networked.util.network.PacketToClient.EntityUpdateData
 import me.shreyasr.networked.util.network.{ListQueuedListener, PacketToClient, PacketToServer}
 import me.shreyasr.networked.util.{EntityFactory, KryoRegistrar}
 
-import scala.collection.JavaConverters._
 import scala.collection.mutable
 
 object ServerMain extends Listener {
@@ -21,6 +20,7 @@ object ServerMain extends Listener {
     val server = new Server(8192, 2048, new KryoSerialization(new ScalaKryoInstantiator().newKryo()))
     val listener = new ListQueuedListener(ServerMain)
     val idMap = new mutable.HashMap[Int, Int]
+    val inputs = new mutable.HashMap[Int, InputDataComponent]
   }
 
   val res = new ServerRes
@@ -40,10 +40,12 @@ object ServerMain extends Listener {
 
       engine.update(16)
 
-      val entityUpdateData: Array[EntityUpdateData] = engine.getEntities.asScala.toArray
-        .map(e => new EntityUpdateData(e.id, e.get[StateDataComponent], e.get[InputDataComponent]))
-      val packet = new PacketToClient(entityUpdateData, System.currentTimeMillis())
-      server.sendToAllUDP(packet)
+      inputs.foreach{case (entityId: Int, input: InputDataComponent) =>
+          val entityOpt = engine.getById(entityId)
+          if (entityOpt.isDefined) entityOpt.get.add(input)
+      }
+
+      server.sendToAllUDP(new PacketToClient(engine.entities.map(new EntityUpdateData(_)).toArray))
 
       Thread.sleep(16)
     }
@@ -56,7 +58,8 @@ object ServerMain extends Listener {
         if (engine.getById(packet.entityId).isEmpty) {
           engine.addEntity(EntityFactory.createPlayer(packet.entityId))
         }
-        engine.getById(packet.entityId).get.add(packet.inputData)
+
+        inputs += packet.entityId -> packet.inputData
       case _ =>
     }
   }

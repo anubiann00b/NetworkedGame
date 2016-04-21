@@ -4,14 +4,13 @@ import java.io.IOException
 
 import com.badlogic.ashley.core.Engine
 import com.badlogic.gdx.assets.AssetManager
-import com.badlogic.gdx.graphics.g2d.SpriteBatch
+import com.badlogic.gdx.graphics.g2d.{BitmapFont, SpriteBatch}
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer
 import com.badlogic.gdx.{ApplicationAdapter, Gdx}
 import com.esotericsoftware.kryonet.{Client, Connection, KryoSerialization, Listener}
 import com.twitter.chill.ScalaKryoInstantiator
 import me.shreyasr.networked.NetworkedGame.RenderingRes
-import me.shreyasr.networked.component.StateDataComponent
-import me.shreyasr.networked.system.render.util.RenderSystem
+import me.shreyasr.networked.system.render.util.{BasicRenderSystem, RenderSystem}
 import me.shreyasr.networked.system.render.{MainRenderSystem, PostRenderSystem, PreBatchRenderSystem, PreRenderSystem}
 import me.shreyasr.networked.system.{InputSendSystem, RenderDataUpdateSystem, UpdateSystem}
 import me.shreyasr.networked.util.network.{ListQueuedListener, PacketToClient}
@@ -20,10 +19,14 @@ import me.shreyasr.networked.util.{Asset, EntityFactory, InputDataQueue, KryoReg
 import scala.collection.JavaConverters._
 
 object NetworkedGame {
+
+  val GLOBAL_DELAY: Int = 200
+
   class RenderingRes extends ClientRes {
     val batch = new SpriteBatch
     val shape = new ShapeRenderer
     val assetManager = new AssetManager
+    val font = new BitmapFont
   }
 
   class ClientRes extends BaseRes {
@@ -57,6 +60,10 @@ class NetworkedGame extends ApplicationAdapter {
     engine.addSystem(new PreRenderSystem(p()))
     engine.addSystem(new PreBatchRenderSystem(p(), res))
     engine.addSystem(new MainRenderSystem(p(), res))
+    engine.addSystem(new BasicRenderSystem(p()) {
+      override def update(deltaTime: Float): Unit =
+        font.draw(batch, (System.currentTimeMillis()-lastUpdateTime).toString, 16, Gdx.graphics.getHeight-16)
+    })
     engine.addSystem(new PostRenderSystem(p(), res))
 
     KryoRegistrar.register(client.getKryo)
@@ -72,22 +79,22 @@ class NetworkedGame extends ApplicationAdapter {
     println(client.getUdpPort)
 	}
 
+  var lastUpdateTime = System.currentTimeMillis()
+
 	override def render() {
     listener.run()
     engine.update(Gdx.graphics.getRawDeltaTime * 1000)
     engine.getSystems.asScala
       .filter(_.isInstanceOf[RenderSystem])
       .foreach(_.update(Gdx.graphics.getRawDeltaTime * 1000))
-//    println(player.get[StateDataComponent].dir.display)
 	}
 
   object ClientListener extends Listener {
     override def received(conn: Connection, obj: scala.Any): Unit = {
-//      println(System.currentTimeMillis())
       obj match {
         case packet: PacketToClient => packetQueue.addPacket(packet)
           val currentPacket = packetQueue.getPacket(System.currentTimeMillis())
-//          println(System.currentTimeMillis() - currentPacket.time)
+          lastUpdateTime = currentPacket.time
           currentPacket.entityData.foreach(data => {
             if (engine.getById(data.entityId).isEmpty) {
               engine.addEntity(EntityFactory.createRenderablePlayer(data.entityId))

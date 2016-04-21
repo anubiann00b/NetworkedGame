@@ -36,5 +36,6 @@ package object networked {
     def getById(id: Int): Option[Entity] = {
       engine.getEntities.asScala.find(_.get[IdComponent].id == id)
     }
+    def entities = engine.getEntities.asScala
   }
 }
