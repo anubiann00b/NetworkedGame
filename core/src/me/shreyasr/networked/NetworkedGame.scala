@@ -10,6 +10,7 @@ import com.badlogic.gdx.{ApplicationAdapter, Gdx}
 import com.esotericsoftware.kryonet.{Client, Connection, KryoSerialization, Listener}
 import com.twitter.chill.ScalaKryoInstantiator
 import me.shreyasr.networked.NetworkedGame.RenderingRes
+import me.shreyasr.networked.component.StateDataComponent
 import me.shreyasr.networked.system.render.util.RenderSystem
 import me.shreyasr.networked.system.render.{MainRenderSystem, PostRenderSystem, PreBatchRenderSystem, PreRenderSystem}
 import me.shreyasr.networked.system.{InputSendSystem, RenderDataUpdateSystem, UpdateSystem}
@@ -28,7 +29,7 @@ object NetworkedGame {
   class ClientRes extends BaseRes {
     var game: NetworkedGame = null
     val player = EntityFactory.createRenderablePlayer()
-    val inputQueue = new InputDataQueue
+    val packetQueue = new InputDataQueue
     val client = new Client(8192, 2048, new KryoSerialization(new ScalaKryoInstantiator().newKryo()))
     val listener = new ListQueuedListener()
   }
@@ -77,20 +78,24 @@ class NetworkedGame extends ApplicationAdapter {
     engine.getSystems.asScala
       .filter(_.isInstanceOf[RenderSystem])
       .foreach(_.update(Gdx.graphics.getRawDeltaTime * 1000))
+//    println(player.get[StateDataComponent].dir.display)
 	}
 
   object ClientListener extends Listener {
     override def received(conn: Connection, obj: scala.Any): Unit = {
+//      println(System.currentTimeMillis())
       obj match {
-        case packet: PacketToClient =>
-          if (engine.getById(packet.entityId).isEmpty) {
-            engine.addEntity(EntityFactory.createRenderablePlayer(packet.entityId))
-          }
-          val entity = engine.getById(packet.entityId).get
-          entity.add(packet.stateDataComponent)
-          if (packet.inputDataComponentOpt.isDefined) {
-            entity.add(packet.inputDataComponentOpt.get)
-          }
+        case packet: PacketToClient => packetQueue.addPacket(packet)
+          val currentPacket = packetQueue.getPacket(System.currentTimeMillis())
+//          println(System.currentTimeMillis() - currentPacket.time)
+          currentPacket.entityData.foreach(data => {
+            if (engine.getById(data.entityId).isEmpty) {
+              engine.addEntity(EntityFactory.createRenderablePlayer(data.entityId))
+            }
+            val entity = engine.getById(data.entityId).get
+            entity.add(data.stateDataComponent)
+            entity.add(data.inputDataComponent)
+          })
         case _ =>
       }
     }

@@ -4,6 +4,7 @@ import com.esotericsoftware.kryonet.{Connection, KryoSerialization, Listener, Se
 import com.twitter.chill.ScalaKryoInstantiator
 import me.shreyasr.networked.component.{InputDataComponent, StateDataComponent}
 import me.shreyasr.networked.system.UpdateSystem
+import me.shreyasr.networked.util.network.PacketToClient.EntityUpdateData
 import me.shreyasr.networked.util.network.{ListQueuedListener, PacketToClient, PacketToServer}
 import me.shreyasr.networked.util.{EntityFactory, KryoRegistrar}
 
@@ -39,10 +40,10 @@ object ServerMain extends Listener {
 
       engine.update(16)
 
-      engine.getEntities.asScala
-        .filter(_.has[StateDataComponent])
-        .foreach(e => server.sendToAllUDP(
-          new PacketToClient(e.id, e.get[StateDataComponent], e.getOpt[InputDataComponent])))
+      val entityUpdateData: Array[EntityUpdateData] = engine.getEntities.asScala.toArray
+        .map(e => new EntityUpdateData(e.id, e.get[StateDataComponent], e.get[InputDataComponent]))
+      val packet = new PacketToClient(entityUpdateData, System.currentTimeMillis())
+      server.sendToAllUDP(packet)
 
       Thread.sleep(16)
     }

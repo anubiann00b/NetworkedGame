@@ -16,6 +16,14 @@ package object networked {
     def display = roundTo(4)
   }
 
+  implicit class IntImprovements(int: Int) {
+    def display: String = int.toLong.display
+  }
+
+  implicit class LongImprovements(long: Long) {
+    def display: String = "%05d" format (long % 100000)
+  }
+
   implicit class EntityImprovements(val entity: Entity) {
     def has[T <: Component : ClassTag]: Boolean = getOpt[T].isDefined
     def getOpt[T <: Component : ClassTag]: Option[T] = Option(get[T])
