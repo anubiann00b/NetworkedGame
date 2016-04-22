@@ -59,7 +59,7 @@ object ServerMain extends Listener {
 
       val timeDiff = System.currentTimeMillis() - startTime
 //      Thread.sleep(16-timeDiff)
-      Thread.sleep(12)
+      Thread.sleep(math.max(0, 16-timeDiff))
     }
   }
 

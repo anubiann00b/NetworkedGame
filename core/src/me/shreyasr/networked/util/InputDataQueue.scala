@@ -14,17 +14,21 @@ class InputDataQueue {
   var currentPacketIndex = 0
 
   def addPacket(packet: PacketToClient): Unit = {
-    packet +=: list
-    list = list.sortBy(_.time * -1)
-    if (list.size > 10000) {
-      list.remove(list.size - 1)
+    if (!list.exists(_.time == packet.time)) {
+      packet +=: list
+      list = list.sortBy(_.time * -1)
+      if (list.size > 10000) {
+        list.remove(list.size - 1)
+      }
     }
   }
 
   var lastPacket = list.head
+  var lastIndex = -1
 
   def getNextPacket(time: Long): Option[PacketToClient] = {
     val index = list.indexOf(lastPacket)
+    lastIndex = index
     if (index < 0) None
     else if (index == 0) None
     else {

@@ -21,7 +21,7 @@ import scala.collection.JavaConverters._
 
 object NetworkedGame {
 
-  val GLOBAL_DELAY: Int = 150
+  val GLOBAL_DELAY: Int = 200
 
   class RenderingRes extends ClientRes {
     val batch = new SpriteBatch
@@ -64,8 +64,10 @@ class NetworkedGame extends ApplicationAdapter {
     engine.addSystem(new PreBatchRenderSystem(p(), res))
     engine.addSystem(new MainRenderSystem(p(), res))
     engine.addSystem(new BasicRenderSystem(p()) {
-      override def update(deltaTime: Float): Unit =
-        font.draw(batch, lastPacketPing.toString, 8, Gdx.graphics.getHeight-8)
+      override def update(deltaTime: Float): Unit = {
+        font.draw(batch, lastPacketPing.toString, 8, Gdx.graphics.getHeight - 8)
+        font.draw(batch, packetQueue.lastIndex.toString, 8, Gdx.graphics.getHeight - 24)
+      }
     })
     engine.addSystem(new PostRenderSystem(p(), res))
     engine.addSystem(new IntervalSystem(5000, p()) {
@@ -96,7 +98,8 @@ class NetworkedGame extends ApplicationAdapter {
     while (currentSimTime + NetworkedGame.GLOBAL_DELAY < realTime) {
       val packetOpt = packetQueue.getNextPacket(realTime)
       if (packetOpt.isEmpty) {
-        currentSimTime = realTime - NetworkedGame.GLOBAL_DELAY
+        currentSimTime += 16//realTime - NetworkedGame.GLOBAL_DELAY
+        engine.update(16)
       } else {
         currentSimTime = packetOpt.get.time
         processPacket(packetOpt.get)
@@ -104,8 +107,8 @@ class NetworkedGame extends ApplicationAdapter {
         val millisToUpdate = realTime - NetworkedGame.GLOBAL_DELAY - packetOpt.get.time
         if (millisToUpdate <= 0) {
         } else /*if (millisToUpdate <= 12)*/ {
-          engine.update(12)
-          currentSimTime += 12
+          engine.update(16)
+          currentSimTime += 16
         }
       }
     }
