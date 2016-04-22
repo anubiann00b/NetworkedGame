@@ -16,4 +16,5 @@ object IdComponent {
   private val random: Random = new Random
 
   def randomId(): Int = random.nextInt
+  def create() = new IdComponent(randomId())
 }

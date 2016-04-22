@@ -8,17 +8,54 @@ import scala.collection.mutable
 
 class InputDataQueue {
 
-  val PACKET_COUNT = NetworkedGame.GLOBAL_DELAY/16*2
-
   var list = mutable.ListBuffer[PacketToClient]()
   list += new PacketToClient(Array[EntityUpdateData](), -Long.MaxValue)
+
+  var currentPacketIndex = 0
 
   def addPacket(packet: PacketToClient): Unit = {
     packet +=: list
     list = list.sortBy(_.time * -1)
-    if (list.size > PACKET_COUNT) {
+    if (list.size > 10000) {
       list.remove(list.size - 1)
     }
+  }
+
+  var lastPacket = list.head
+
+  def getNextPacket(time: Long): Option[PacketToClient] = {
+    val index = list.indexOf(lastPacket)
+    print(s"idx$index ")
+    if (index < 0) None
+    else if (index == 0) None
+    else {
+      val nextPacket = list(index-1)
+      if (time - nextPacket.time > NetworkedGame.GLOBAL_DELAY) {
+        lastPacket = nextPacket
+        Some(nextPacket)
+      } else None
+    }
+  }
+
+  def getPacketsTo(time: Long): Seq[PacketToClient] = {
+//    val packets = list.filter(_.time < time-NetworkedGame.GLOBAL_DELAY)
+//    packets.foreach(_.consumed = true)
+//    prune()
+//    packets
+    val index = list.indexOf(lastPacket)-1
+    println(index)
+    if (index < 3) Seq()
+    else if (index > 8) {
+      lastPacket = list(index - 2)
+      list.slice(index-2, index+1).reverse
+    } else {
+      lastPacket = list(index)
+      Seq(list(index))
+    }
+  }
+
+  def prune() = {
+    list = list.filterNot(_.consumed)
   }
 
   var lastGottenPacket = list.head

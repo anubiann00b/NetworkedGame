@@ -1,7 +1,7 @@
 package me.shreyasr
 
 import com.badlogic.ashley.core.{Component, Engine, Entity}
-import me.shreyasr.networked.component.IdComponent
+import me.shreyasr.networked.component.{IdComponent, TypeComponent}
 
 import scala.reflect._
 import scala.collection.JavaConverters._
@@ -25,11 +25,14 @@ package object networked {
   }
 
   implicit class EntityImprovements(val entity: Entity) {
+    def id = get[IdComponent].id
+
     def has[T <: Component : ClassTag]: Boolean = getOpt[T].isDefined
     def getOpt[T <: Component : ClassTag]: Option[T] = Option(get[T])
     def get[T <: Component : ClassTag]: T =
       entity.getComponent(classTag[T].runtimeClass.asInstanceOf[Class[T]])
-    def id = get[IdComponent].id
+
+    def is[T <: TypeComponent.Type: ClassTag]: Boolean = entity.get[TypeComponent].is[T]
   }
 
   implicit class EngineImprovements(val engine: Engine) {

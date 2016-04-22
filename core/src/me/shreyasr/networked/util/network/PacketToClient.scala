@@ -8,6 +8,8 @@ import me.shreyasr.networked.util.network.PacketToClient.EntityUpdateData
 class PacketToClient(val entityData: Array[EntityUpdateData],
                      val time: Long) {
 
+  @transient var consumed = false
+
   def this() = this(null, 0)
   def this(entityData: Array[EntityUpdateData]) = this(entityData, System.currentTimeMillis())
 
@@ -21,7 +23,9 @@ object PacketToClient {
                          val inputDataComponent: InputDataComponent) {
 
     def this() = this(0, null, null)
-    def this(e: Entity) = this(e.id, e.get[StateDataComponent], e.get[InputDataComponent])
+    def this(e: Entity) = {
+      this(e.id, e.get[StateDataComponent], e.get[InputDataComponent].forClient())
+    }
 
     override def toString: String =
       s"EntityUpdateData[${entityId.display} $stateDataComponent $inputDataComponent]"

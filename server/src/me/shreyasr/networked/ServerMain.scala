@@ -1,8 +1,10 @@
 package me.shreyasr.networked
 
+import java.net.BindException
+
 import com.esotericsoftware.kryonet.{Connection, KryoSerialization, Listener, Server}
 import com.twitter.chill.ScalaKryoInstantiator
-import me.shreyasr.networked.component.InputDataComponent
+import me.shreyasr.networked.component.{InputDataComponent, TypeComponent}
 import me.shreyasr.networked.system.UpdateSystem
 import me.shreyasr.networked.util.network.PacketToClient.EntityUpdateData
 import me.shreyasr.networked.util.network.{ListQueuedListener, PacketToClient, PacketToServer}
@@ -28,26 +30,36 @@ object ServerMain extends Listener {
 
   KryoRegistrar.register(server.getKryo)
   server.start()
-  server.bind(54555, 54777)
+  try {
+    server.bind(54555, 54777)
+  } catch {
+    case e: BindException => System.exit(1)
+  }
   server.addListener(listener)
 
   val p = { var i = 0; () => { i += 1; i} }
   engine.addSystem(new UpdateSystem(p(), res))
 
   def run() = {
+    var startTime = 0l
     while (true) {
+      startTime = System.currentTimeMillis()
       listener.run()
 
       engine.update(16)
 
-      inputs.foreach{case (entityId: Int, input: InputDataComponent) =>
-          val entityOpt = engine.getById(entityId)
-          if (entityOpt.isDefined) entityOpt.get.add(input)
-      }
+//      inputs.foreach{case (entityId: Int, input: InputDataComponent) =>
+//          val entityOpt = engine.getById(entityId)
+//          if (entityOpt.isDefined) entityOpt.get.add(input)
+//      }
 
-      server.sendToAllUDP(new PacketToClient(engine.entities.map(new EntityUpdateData(_)).toArray))
+      server.sendToAllUDP(new PacketToClient(engine.entities
+        .filter(_.is[TypeComponent.Ship])
+        .map(new EntityUpdateData(_)).toArray))
 
-      Thread.sleep(16)
+      val timeDiff = System.currentTimeMillis() - startTime
+//      Thread.sleep(16-timeDiff)
+      Thread.sleep(12)
     }
   }
 
@@ -58,8 +70,7 @@ object ServerMain extends Listener {
         if (engine.getById(packet.entityId).isEmpty) {
           engine.addEntity(EntityFactory.createPlayer(packet.entityId))
         }
-
-        inputs += packet.entityId -> packet.inputData
+        engine.getById(packet.entityId).get.add(packet.inputData)
       case _ =>
     }
   }
