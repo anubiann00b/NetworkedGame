@@ -9,7 +9,7 @@ import scala.collection.mutable
 class InputDataQueue {
 
   var list = mutable.ListBuffer[PacketToClient]()
-  list += new PacketToClient(Array[EntityUpdateData](), -Long.MaxValue)
+  list += new PacketToClient(Array[EntityUpdateData](), System.currentTimeMillis())
 
   var currentPacketIndex = 0
 
@@ -25,7 +25,6 @@ class InputDataQueue {
 
   def getNextPacket(time: Long): Option[PacketToClient] = {
     val index = list.indexOf(lastPacket)
-    print(s"idx$index ")
     if (index < 0) None
     else if (index == 0) None
     else {

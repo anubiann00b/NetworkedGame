@@ -3,6 +3,7 @@ package me.shreyasr.networked
 import java.io.IOException
 
 import com.badlogic.ashley.core.Engine
+import com.badlogic.ashley.systems.IntervalSystem
 import com.badlogic.gdx.assets.AssetManager
 import com.badlogic.gdx.graphics.g2d.{BitmapFont, SpriteBatch}
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer
@@ -47,7 +48,9 @@ class NetworkedGame extends ApplicationAdapter {
   lazy val res = new RenderingRes()
   import res._
 
-	override def create() {
+  var lastPacketPing = System.currentTimeMillis()
+
+  override def create() {
     Asset.loadAll(assetManager)
 
     engine.addEntity(player)
@@ -62,9 +65,14 @@ class NetworkedGame extends ApplicationAdapter {
     engine.addSystem(new MainRenderSystem(p(), res))
     engine.addSystem(new BasicRenderSystem(p()) {
       override def update(deltaTime: Float): Unit =
-        font.draw(batch, (lastUpdateTime).toString, 8, Gdx.graphics.getHeight-8)
+        font.draw(batch, lastPacketPing.toString, 8, Gdx.graphics.getHeight-8)
     })
     engine.addSystem(new PostRenderSystem(p(), res))
+    engine.addSystem(new IntervalSystem(5000, p()) {
+      override def updateInterval(): Unit = {
+        client.updateReturnTripTime()
+      }
+    })
 
     KryoRegistrar.register(client.getKryo)
     listener.setListener(ClientListener)
@@ -79,53 +87,28 @@ class NetworkedGame extends ApplicationAdapter {
     println(client.getUdpPort)
 	}
 
-  var lastUpdateTime = 0
-  var currentPacket: Option[PacketToClient] = None
-  var continuingPreviousPacket = false
   var currentSimTime = System.currentTimeMillis()
 
 	override def render() {
     listener.run()
 
-    lastUpdateTime += 1
-    while (currentSimTime + NetworkedGame.GLOBAL_DELAY <= System.currentTimeMillis()) {
-      if (currentPacket.isEmpty) {
-        currentPacket = packetQueue.getNextPacket(currentSimTime)
-        print(s"p-$currentPacket")
-      }
-      if (currentPacket.isDefined) {
-        if (!continuingPreviousPacket) {
-          processPacket(currentPacket.get)
-//          currentSimTime = currentPacket.get.time
-        }
-        continuingPreviousPacket = false
-        val timeOffset = currentPacket.get.time - currentSimTime
-        if (timeOffset <= 0) {
-          currentPacket = None
-        } else if (timeOffset <= 12) {
-          currentSimTime += timeOffset
-          engine.update(timeOffset)
-          currentPacket = None
-          print("done")
-        } else {
-          // if (timeOffset > 16)
+    val realTime = System.currentTimeMillis()
+    while (currentSimTime + NetworkedGame.GLOBAL_DELAY < realTime) {
+      val packetOpt = packetQueue.getNextPacket(realTime)
+      if (packetOpt.isEmpty) {
+        currentSimTime = realTime - NetworkedGame.GLOBAL_DELAY
+      } else {
+        currentSimTime = packetOpt.get.time
+        processPacket(packetOpt.get)
+
+        val millisToUpdate = realTime - NetworkedGame.GLOBAL_DELAY - packetOpt.get.time
+        if (millisToUpdate <= 0) {
+        } else /*if (millisToUpdate <= 12)*/ {
           engine.update(12)
           currentSimTime += 12
-          continuingPreviousPacket = true
-          print("continue")
         }
-        println(s"t$timeOffset")
-      } else {
-        currentSimTime = System.currentTimeMillis() - NetworkedGame.GLOBAL_DELAY + 2
-        println()
       }
     }
-
-//    packetQueue.getPacketsTo(time).foreach(packet => {
-//      processPacket(packet)
-//      lastUpdateTime += 1
-//      engine.update(Gdx.graphics.getRawDeltaTime * 1000)
-//    })
 
     engine.getSystems.asScala
       .filter(_.isInstanceOf[RenderSystem])
@@ -146,7 +129,9 @@ class NetworkedGame extends ApplicationAdapter {
   object ClientListener extends Listener {
     override def received(conn: Connection, obj: scala.Any): Unit = {
       obj match {
-        case packet: PacketToClient => packetQueue.addPacket(packet)
+        case packet: PacketToClient =>
+          lastPacketPing = System.currentTimeMillis()-packet.time
+          packetQueue.addPacket(packet)
         case _: FrameworkMessage =>
       }
     }
