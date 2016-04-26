@@ -6,7 +6,7 @@ import me.shreyasr.networked.util.network.PacketToClient.EntityUpdateData
 
 import scala.collection.mutable
 
-class InputDataQueue {
+class PacketQueue {
 
   var list = mutable.ListBuffer[PacketToClient]()
   list += new PacketToClient(Array[EntityUpdateData](), System.currentTimeMillis())

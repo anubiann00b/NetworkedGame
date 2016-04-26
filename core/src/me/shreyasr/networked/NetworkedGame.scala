@@ -15,7 +15,7 @@ import me.shreyasr.networked.system.render.util.{BasicRenderSystem, RenderSystem
 import me.shreyasr.networked.system.render.{MainRenderSystem, PostRenderSystem, PreBatchRenderSystem, PreRenderSystem}
 import me.shreyasr.networked.system.{InputSendSystem, RenderDataUpdateSystem, UpdateSystem}
 import me.shreyasr.networked.util.network.{ListQueuedListener, PacketToClient}
-import me.shreyasr.networked.util.{Asset, EntityFactory, InputDataQueue, KryoRegistrar}
+import me.shreyasr.networked.util.{Asset, EntityFactory, PacketQueue, KryoRegistrar}
 
 import scala.collection.JavaConverters._
 
@@ -33,7 +33,7 @@ object NetworkedGame {
   class ClientRes extends BaseRes {
     var game: NetworkedGame = null
     val player = EntityFactory.createRenderablePlayer()
-    val packetQueue = new InputDataQueue
+    val packetQueue = new PacketQueue
     val client = new Client(8192, 2048, new KryoSerialization(new ScalaKryoInstantiator().newKryo()))
     val listener = new ListQueuedListener()
   }
