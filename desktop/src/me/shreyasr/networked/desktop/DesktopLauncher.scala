@@ -7,6 +7,9 @@ object DesktopLauncher {
 
   def main(arg: Array[String]) {
     val config: LwjglApplicationConfiguration = new LwjglApplicationConfiguration
+    config.vSyncEnabled = false
+    config.foregroundFPS = 60
+    config.backgroundFPS = 60
     new LwjglApplication(new NetworkedGame, config)
   }
 }

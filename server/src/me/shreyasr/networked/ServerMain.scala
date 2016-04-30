@@ -2,6 +2,7 @@ package me.shreyasr.networked
 
 import java.net.BindException
 
+import com.badlogic.gdx.backends.lwjgl.LwjglNativesLoader
 import com.esotericsoftware.kryonet.{Connection, KryoSerialization, Listener, Server}
 import com.twitter.chill.ScalaKryoInstantiator
 import me.shreyasr.networked.component.{InputDataComponent, TypeComponent}
@@ -9,12 +10,14 @@ import me.shreyasr.networked.system.UpdateSystem
 import me.shreyasr.networked.util.network.PacketToClient.EntityUpdateData
 import me.shreyasr.networked.util.network.{ListQueuedListener, PacketToClient, PacketToServer}
 import me.shreyasr.networked.util.{EntityFactory, KryoRegistrar}
+import org.lwjgl.opengl.Display
 
 import scala.collection.mutable
 
 object ServerMain extends Listener {
 
   def main(args: Array[String]) {
+    LwjglNativesLoader.load()
     ServerMain.run()
   }
 
@@ -41,25 +44,21 @@ object ServerMain extends Listener {
   engine.addSystem(new UpdateSystem(p(), res))
 
   def run() = {
-    var startTime = 0l
+    var lastPacketTime = 0l
     while (true) {
-      startTime = System.currentTimeMillis()
+      val time = System.currentTimeMillis()
       listener.run()
 
-      engine.update(16)
+      engine.update(1)
 
-//      inputs.foreach{case (entityId: Int, input: InputDataComponent) =>
-//          val entityOpt = engine.getById(entityId)
-//          if (entityOpt.isDefined) entityOpt.get.add(input)
-//      }
+      if (time - lastPacketTime > 0) {
+        server.sendToAllUDP(new PacketToClient(engine.entities
+          .filter(_.is[TypeComponent.Ship])
+          .map(new EntityUpdateData(_)).toArray))
+        lastPacketTime = time
+      }
 
-      server.sendToAllUDP(new PacketToClient(engine.entities
-        .filter(_.is[TypeComponent.Ship])
-        .map(new EntityUpdateData(_)).toArray))
-
-      val timeDiff = System.currentTimeMillis() - startTime
-//      Thread.sleep(16-timeDiff)
-      Thread.sleep(math.max(0, 16-timeDiff))
+      Display.sync(60)
     }
   }
 

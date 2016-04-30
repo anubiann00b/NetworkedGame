@@ -19,6 +19,9 @@ object KryoRegistrar {
     kryo.registerType[Vec2]
 
     kryo.register(TypeComponent.Ship.getClass)
+
+    kryo.addDefaultSerializer(classOf[StateDataComponent],
+      new StateDataComponent.StateDataComponentSerializer())
   }
 
   implicit class KryoImprovements(val kryo: Kryo) {

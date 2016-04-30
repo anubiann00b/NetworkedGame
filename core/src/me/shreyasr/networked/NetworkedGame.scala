@@ -15,13 +15,13 @@ import me.shreyasr.networked.system.render.util.{BasicRenderSystem, RenderSystem
 import me.shreyasr.networked.system.render.{MainRenderSystem, PostRenderSystem, PreBatchRenderSystem, PreRenderSystem}
 import me.shreyasr.networked.system.{InputSendSystem, RenderDataUpdateSystem, UpdateSystem}
 import me.shreyasr.networked.util.network.{ListQueuedListener, PacketToClient}
-import me.shreyasr.networked.util.{Asset, EntityFactory, PacketQueue, KryoRegistrar}
+import me.shreyasr.networked.util.{Asset, EntityFactory, KryoRegistrar, PacketQueue}
 
 import scala.collection.JavaConverters._
 
 object NetworkedGame {
 
-  val GLOBAL_DELAY: Int = 200
+  val GLOBAL_DELAY: Int = 100
 
   class RenderingRes extends ClientRes {
     val batch = new SpriteBatch
@@ -67,6 +67,8 @@ class NetworkedGame extends ApplicationAdapter {
       override def update(deltaTime: Float): Unit = {
         font.draw(batch, lastPacketPing.toString, 8, Gdx.graphics.getHeight - 8)
         font.draw(batch, packetQueue.lastIndex.toString, 8, Gdx.graphics.getHeight - 24)
+        font.draw(batch, Gdx.graphics.getFramesPerSecond.toString,
+          Gdx.graphics.getWidth - 24, Gdx.graphics.getHeight - 8)
       }
     })
     engine.addSystem(new PostRenderSystem(p(), res))
@@ -89,29 +91,29 @@ class NetworkedGame extends ApplicationAdapter {
     println(client.getUdpPort)
 	}
 
-  var currentSimTime = System.currentTimeMillis()
-
 	override def render() {
     listener.run()
 
-    val realTime = System.currentTimeMillis()
-    while (currentSimTime + NetworkedGame.GLOBAL_DELAY < realTime) {
-      val packetOpt = packetQueue.getNextPacket(realTime)
-      if (packetOpt.isEmpty) {
-        currentSimTime += 16//realTime - NetworkedGame.GLOBAL_DELAY
-        engine.update(16)
-      } else {
-        currentSimTime = packetOpt.get.time
-        processPacket(packetOpt.get)
-
-        val millisToUpdate = realTime - NetworkedGame.GLOBAL_DELAY - packetOpt.get.time
-        if (millisToUpdate <= 0) {
-        } else /*if (millisToUpdate <= 12)*/ {
-          engine.update(16)
-          currentSimTime += 16
-        }
+    val time = System.currentTimeMillis()
+    var packetOpt = packetQueue.getNextPacket(time)
+//    if (System.currentTimeMillis() - packetQueue.lastPacket.time > 2*NetworkedGame.GLOBAL_DELAY) {
+    if (packetQueue.lastIndex > 10) {
+      var tempPacketOpt: Option[PacketToClient] = None
+      while ({
+        tempPacketOpt = packetQueue.getNextPacket(time)
+        tempPacketOpt.isDefined
+      }) {
+        packetOpt = tempPacketOpt
       }
     }
+    if (packetOpt.isDefined) {
+      processPacket(packetOpt.get)
+      engine.update(1)
+    }
+    engine.update(1)
+
+//    println(System.currentTimeMillis()%10000 + " " +
+//      engine.getEntities.asScala.filter(_.is[TypeComponent.Ship]).head.get[StateDataComponent].pos.x)
 
     engine.getSystems.asScala
       .filter(_.isInstanceOf[RenderSystem])
@@ -124,6 +126,8 @@ class NetworkedGame extends ApplicationAdapter {
         engine.addEntity(EntityFactory.createRenderablePlayer(data.entityId))
       }
       val entity = engine.getById(data.entityId).get
+      data.stateDataComponent.lastKnownPos = data.stateDataComponent.pos.copy
+      data.stateDataComponent.lastKnownDir = data.stateDataComponent.dir
       entity.add(data.stateDataComponent)
       entity.add(data.inputDataComponent)
     })

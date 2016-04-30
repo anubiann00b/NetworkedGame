@@ -9,18 +9,18 @@ import me.shreyasr.networked.util.EntityFactory
 class UpdateSystem(priority: Int, res: NetworkedGame.BaseRes)
   extends IteratingSystem(Family.all(classOf[StateDataComponent]).get(), priority) {
 
-  override def processEntity(entity: Entity, deltaTime: Float) = {
+  override def processEntity(entity: Entity, delta: Float) = {
     val inputOpt = entity.getOpt[InputDataComponent]
     val state = entity.get[StateDataComponent]
 
     if (inputOpt.isDefined) {
       val input = inputOpt.get
         if (!input.freshFromServer) {
-        if (input.w) state.vel += 0.1f
-        if (input.s) state.vel -= 0.1f
+        if (input.w) state.vel += 0.2f * delta
+        if (input.s) state.vel -= 0.2f * delta
 
-        if (input.a) state.dir += 0.05f
-        if (input.d) state.dir -= 0.05f
+        if (input.a) state.dir += 0.05f * delta
+        if (input.d) state.dir -= 0.05f * delta
       } else {
         input.freshFromServer = false
       }
@@ -30,8 +30,19 @@ class UpdateSystem(priority: Int, res: NetworkedGame.BaseRes)
       }
     }
 
-    state.pos.x += state.vel * Math.cos(state.dir).toFloat
-    state.pos.y += state.vel * Math.sin(state.dir).toFloat
+    state.pos.x += state.vel * Math.cos(state.dir).toFloat * delta
+    state.pos.y += state.vel * Math.sin(state.dir).toFloat * delta
+
+    if (entity.is[TypeComponent.Ship] && false) {
+      val amount = 0.01f * delta
+      if (state.vel < -amount) {
+        state.vel += amount
+      } else if (state.vel > amount) {
+        state.vel -= amount
+      } else {
+        state.vel = 0
+      }
+    }
 
     if (state.pos.x < -100 || state.pos.x > 1000 || state.pos.y < -100 || state.pos.y > 1000) {
       if (entity.is[TypeComponent.Laser]) getEngine.removeEntity(entity)

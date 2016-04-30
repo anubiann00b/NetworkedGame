@@ -21,7 +21,7 @@ object Asset extends ShortEnum[Asset] {
     assetManager.finishLoading()
   }
 
-  case object FIGHTER extends Asset(1, "fighter.png")
+  case object FIGHTER extends Asset(1, "images/heroship_1_0.png")
   case object LASER extends Asset(2, "laser_blue.png")
   case object SPACE extends Asset(3, "space.png")
 

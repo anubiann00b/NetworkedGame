@@ -41,11 +41,13 @@ project(":desktop") {
 }
 
 project(":server") {
-    apply plugin: "scala"
+    apply plugin: "java"
 
     dependencies {
-        compile project(":kryonet")
         compile project(":core")
+        compile "com.badlogicgames.gdx:gdx-backend-lwjgl:$gdxVersion"
+        compile "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
+        compile "com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-desktop"
     }
 }
 
