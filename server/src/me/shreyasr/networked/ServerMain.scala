@@ -58,7 +58,7 @@ object ServerMain extends Listener {
         lastPacketTime = time
       }
 
-      Display.sync(60)
+      Display.sync(NetworkedGame.GLOBAL_FPS)
     }
   }
 

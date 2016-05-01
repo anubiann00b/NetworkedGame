@@ -6,7 +6,7 @@ import me.shreyasr.networked.component.{InputDataComponent, StateDataComponent}
 import me.shreyasr.networked.util.network.PacketToClient.EntityUpdateData
 
 class PacketToClient(val entityData: Array[EntityUpdateData],
-                     val time: Long) {
+                     val time: Long) extends Ordered[PacketToClient] {
 
   @transient var consumed = false
 
@@ -15,6 +15,10 @@ class PacketToClient(val entityData: Array[EntityUpdateData],
 
   override def toString: String =
     s"PacketToClient[${time.display} ${entityData mkString ","}]"
+
+  override def compare(that: PacketToClient): Int = {
+    Ordering.Long.compare(that.time, time)
+  }
 }
 
 object PacketToClient {

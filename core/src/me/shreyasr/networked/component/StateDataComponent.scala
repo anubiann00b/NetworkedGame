@@ -6,7 +6,7 @@ import com.esotericsoftware.kryo.{Kryo, Serializer}
 import me.shreyasr.networked._
 import me.shreyasr.networked.util.Vec2
 
-class StateDataComponent(val pos: Vec2 = new Vec2(0, 0), var dir: Float = 0f, var vel: Float = 0f)
+class StateDataComponent(val pos: Vec2 = new Vec2(0, 0), var dir: Int = 0, var vel: Float = 0f)
   extends Component {
 
   var lastKnownPos = pos.copy
@@ -20,13 +20,13 @@ object StateDataComponent {
   class StateDataComponentSerializer extends Serializer[StateDataComponent] {
     override def write(kryo: Kryo, output: Output, component: StateDataComponent): Unit = {
       kryo.writeObject(output, component.pos)
-      output.writeFloat(component.dir)
+      output.writeInt(component.dir)
       output.writeFloat(component.vel)
     }
 
     override def read(kryo: Kryo, input: Input, cls: Class[StateDataComponent]): StateDataComponent = {
       val pos = kryo.readObject(input, classOf[Vec2])
-      val component = new StateDataComponent(pos, input.readFloat(), input.readFloat())
+      val component = new StateDataComponent(pos, input.readInt(), input.readFloat())
       component
     }
   }

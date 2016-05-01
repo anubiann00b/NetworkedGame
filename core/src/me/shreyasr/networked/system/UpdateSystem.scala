@@ -15,12 +15,12 @@ class UpdateSystem(priority: Int, res: NetworkedGame.BaseRes)
 
     if (inputOpt.isDefined) {
       val input = inputOpt.get
-        if (!input.freshFromServer) {
-        if (input.w) state.vel += 0.2f * delta
-        if (input.s) state.vel -= 0.2f * delta
+      if (!input.freshFromServer) {
+        if (input.w) state.vel += 1
+        if (input.s) state.vel -= 1
 
-        if (input.a) state.dir += 0.05f * delta
-        if (input.d) state.dir -= 0.05f * delta
+        if (input.a) state.dir += 1
+        if (input.d) state.dir -= 1
       } else {
         input.freshFromServer = false
       }
@@ -30,8 +30,8 @@ class UpdateSystem(priority: Int, res: NetworkedGame.BaseRes)
       }
     }
 
-    state.pos.x += state.vel * Math.cos(state.dir).toFloat * delta
-    state.pos.y += state.vel * Math.sin(state.dir).toFloat * delta
+    state.pos.x += state.vel * Math.cos(state.dir.toRadians).toFloat * delta
+    state.pos.y += state.vel * Math.sin(state.dir.toRadians).toFloat * delta
 
     if (entity.is[TypeComponent.Ship] && false) {
       val amount = 0.01f * delta

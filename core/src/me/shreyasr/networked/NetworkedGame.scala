@@ -1,16 +1,20 @@
 package me.shreyasr.networked
 
 import java.io.IOException
+import java.util.concurrent.Executors
+import java.util.zip.Deflater
 
 import com.badlogic.ashley.core.Engine
 import com.badlogic.ashley.systems.IntervalSystem
 import com.badlogic.gdx.assets.AssetManager
 import com.badlogic.gdx.graphics.g2d.{BitmapFont, SpriteBatch}
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer
+import com.badlogic.gdx.graphics.{Pixmap, PixmapIO}
 import com.badlogic.gdx.{ApplicationAdapter, Gdx}
 import com.esotericsoftware.kryonet._
 import com.twitter.chill.ScalaKryoInstantiator
 import me.shreyasr.networked.NetworkedGame.RenderingRes
+import me.shreyasr.networked.component.{StateDataComponent, TypeComponent}
 import me.shreyasr.networked.system.render.util.{BasicRenderSystem, RenderSystem}
 import me.shreyasr.networked.system.render.{MainRenderSystem, PostRenderSystem, PreBatchRenderSystem, PreRenderSystem}
 import me.shreyasr.networked.system.{InputSendSystem, RenderDataUpdateSystem, UpdateSystem}
@@ -22,6 +26,7 @@ import scala.collection.JavaConverters._
 object NetworkedGame {
 
   val GLOBAL_DELAY: Int = 100
+  val GLOBAL_FPS: Int = 61
 
   class RenderingRes extends ClientRes {
     val batch = new SpriteBatch
@@ -66,7 +71,7 @@ class NetworkedGame extends ApplicationAdapter {
     engine.addSystem(new BasicRenderSystem(p()) {
       override def update(deltaTime: Float): Unit = {
         font.draw(batch, lastPacketPing.toString, 8, Gdx.graphics.getHeight - 8)
-        font.draw(batch, packetQueue.lastIndex.toString, 8, Gdx.graphics.getHeight - 24)
+        font.draw(batch, packetQueue.queue.size.toString, 8, Gdx.graphics.getHeight - 24)
         font.draw(batch, Gdx.graphics.getFramesPerSecond.toString,
           Gdx.graphics.getWidth - 24, Gdx.graphics.getHeight - 8)
       }
@@ -91,34 +96,57 @@ class NetworkedGame extends ApplicationAdapter {
     println(client.getUdpPort)
 	}
 
+  var i = 0
+
 	override def render() {
     listener.run()
 
     val time = System.currentTimeMillis()
     var packetOpt = packetQueue.getNextPacket(time)
-//    if (System.currentTimeMillis() - packetQueue.lastPacket.time > 2*NetworkedGame.GLOBAL_DELAY) {
-    if (packetQueue.lastIndex > 10) {
+    //    if (System.currentTimeMillis() - packetQueue.lastPacket.time > 2*NetworkedGame.GLOBAL_DELAY) {
+    if (packetQueue.queue.size > 10) {
+      println("cleaning")
       var tempPacketOpt: Option[PacketToClient] = None
-      while ({
+      while ( {
         tempPacketOpt = packetQueue.getNextPacket(time)
         tempPacketOpt.isDefined
       }) {
         packetOpt = tempPacketOpt
       }
     }
-    if (packetOpt.isDefined) {
+    if (packetOpt.isDefined && time - packetOpt.get.time < 1000) {
       processPacket(packetOpt.get)
-      engine.update(1)
+      //      engine.update(1)
     }
     engine.update(1)
 
-//    println(System.currentTimeMillis()%10000 + " " +
-//      engine.getEntities.asScala.filter(_.is[TypeComponent.Ship]).head.get[StateDataComponent].pos.x)
+    i += 1
+
+    println(i + " " +
+      engine.getEntities.asScala.filter(_.is[TypeComponent.Ship]).head.get[StateDataComponent])
 
     engine.getSystems.asScala
       .filter(_.isInstanceOf[RenderSystem])
       .foreach(_.update(Gdx.graphics.getRawDeltaTime * 1000))
-	}
+
+//    Gdx.gl.glPixelStorei(GL20.GL_PACK_ALIGNMENT, 1)
+//    Gdx.gl.glReadPixels(0, 0, 640, 480, GL20.GL_RGBA, GL20.GL_UNSIGNED_BYTE, pixmap.getPixels)
+
+//    executor.execute(new Runnable {
+//      override def run(): Unit = {
+//        val file = new FileHandle("/tmp/shot_" + i.formatted("%06d") + ".png")
+//        png.write(file, pixmap)
+//      }
+//    })
+  }
+
+  lazy val pixmap = new Pixmap(640, 480, Pixmap.Format.RGBA8888)
+  val executor = Executors.newFixedThreadPool(25)
+  lazy val png = {
+    val p = new PixmapIO.PNG((640 * 480 * 1.5f).toInt)
+    p.setCompression(Deflater.BEST_SPEED)
+    p
+  }
 
   def processPacket(packet: PacketToClient) = {
     packet.entityData.foreach(data => {

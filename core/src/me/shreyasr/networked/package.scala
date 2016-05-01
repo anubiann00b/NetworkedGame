@@ -18,6 +18,7 @@ package object networked {
 
   implicit class IntImprovements(int: Int) {
     def display: String = int.toLong.display
+    def toRadians: Float = Math.toRadians(int).toFloat
   }
 
   implicit class LongImprovements(long: Long) {
